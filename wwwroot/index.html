@@ -33,7 +33,7 @@ button:hover{background:#0f7674}
 <script src="/config.js"></script>
 <script>
 const API=(window.API_BASE||"");
-document.getElementById('f').onsubmit=async function(e){e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=1;btn.textContent='Signing in...';try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e.target.e.value,password:e.target.p.value})});if(!r.ok)throw await r.json();const d=await r.json();localStorage.setItem('bs_token',d.accessToken);localStorage.setItem('bs_user',JSON.stringify({email:e.target.e.value,role:d.role}));location.href='/app.html';}catch(x){document.getElementById('err').textContent=x.error||x.message||'Login failed';document.getElementById('err').classList.add('show');btn.disabled=0;btn.textContent='Sign in';}};
+document.getElementById('f').onsubmit=async function(e){e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=1;btn.textContent='Signing in...';try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e.target.e.value,password:e.target.p.value})});if(!r.ok){let err={};try{err=await r.json()}catch{}throw new Error(err.error||'Login failed ('+r.status+')')}const d=await r.json();localStorage.setItem('bs_token',d.accessToken);localStorage.setItem('bs_user',JSON.stringify({email:e.target.e.value,role:d.role}));location.href='/app.html';}catch(x){document.getElementById('err').textContent=(x&&x.message)?x.message:'Login failed';document.getElementById('err').classList.add('show');btn.disabled=0;btn.textContent='Sign in';}};
 if(localStorage.getItem('bs_token'))location.href='/app.html';
 </script>
 </body>
