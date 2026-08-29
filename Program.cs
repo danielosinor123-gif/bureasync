@@ -12,6 +12,7 @@ var key=builder.Configuration["Jwt:Key"]??"";
 if(key.Length<32)throw new InvalidOperationException("Set Jwt:Key through user secrets or environment variables; it must be 32+ characters.");
 var connection=builder.Configuration.GetConnectionString("BureauSync")??throw new InvalidOperationException("BureauSync connection string missing.");
 var provider=builder.Configuration["DatabaseProvider"]??"SqlServer";
+Console.WriteLine($"DatabaseProvider: {provider}");
 builder.Services.AddDbContext<BureauSyncDb>(x=>{if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase))x.UseSqlite(connection);else x.UseSqlServer(connection);});
 builder.Services.AddScoped<CsvValidator>();
 builder.Services.AddEndpointsApiExplorer();
@@ -25,7 +26,25 @@ builder.Services.AddCors(o=>o.AddPolicy("frontend", p=>{
 }));
 builder.Services.Configure<ForwardedHeadersOptions>(o=>{o.ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto; o.KnownNetworks.Clear(); o.KnownProxies.Clear();});
 var app=builder.Build();
-if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){using var scope=app.Services.CreateScope();try{scope.ServiceProvider.GetRequiredService<BureauSyncDb>().Database.EnsureCreated();}catch(Exception ex){Console.WriteLine($"DB EnsureCreated failed: {ex.Message}");}}
+if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){
+    using var scope=app.Services.CreateScope();
+    var db=scope.ServiceProvider.GetRequiredService<BureauSyncDb>();
+    try{
+        db.Database.EnsureCreated();
+        // Seed a default lender if none exist
+        if(!db.Lenders.Any()){
+            db.Lenders.Add(new Lender{
+                Code="LND-001",
+                Name="First Bank Nigeria",
+                SwiftBic="FBNINLLA",
+                CbnLicense="CBN/BD/2023/001",
+                Lei="213800X5R8QZ7J4K2L12",
+                CustomId="NUBAN-011"
+            });
+            db.SaveChanges();
+        }
+    }catch(Exception ex){Console.WriteLine($"DB initialization failed: {ex.Message}");}
+}
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
