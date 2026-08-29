@@ -1,0 +1,5 @@
+lender_id,borrower_name,identity_id,loan_account_no,loan_amount,outstanding_balance,status,disbursement_date,due_date,repayment_date
+LND-001,Amina Yusuf,DEMO-NIN-70123456789,ACCT-001,250000,0,REPAID,2026-01-10,2026-06-10,2026-05-28
+LND-001,Chidi Okafor,DEMO-NIN-70987654321,ACCT-002,150000,30000,ACTIVE,2026-02-15,2026-08-15,
+LND-001,Fatima Bello,,ACCT-003,75000,75000,ACTIVE,2026-03-12,2026-09-12,
+LND-001,Emeka Nwosu,DEMO-NIN-70888812345,ACCT-004,100000,25000,REPAID,2026-02-02,2026-05-02,2026-04-29

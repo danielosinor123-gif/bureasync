@@ -1,0 +1,96 @@
+BUREAUSYNC — HOW TO USE
+=========================
+
+WHAT IT HELPS WITH
+------------------
+BureauSync is a lender-submission quality gate for credit bureaux.
+
+It checks a lender's CSV loan file before any record enters a bureau database. It helps bureau operators find:
+- Missing borrower identity fields
+- Duplicate loan-account numbers
+- Invalid or negative balances
+- Balances that exceed the original loan amount
+- Loans marked REPAID or SETTLED that still have an outstanding balance
+- Invalid loan statuses and dates
+- Missing repayment dates that need an operator review
+
+Each record is classified as READY, REVIEW, or REJECTED and given a clear reason. This reduces manual clean-up and helps prevent bad data from becoming a credit-file issue.
+
+IMPORTANT SAFETY BOUNDARY
+-------------------------
+This project is a development baseline. Use only synthetic/sample data until a credit-bureau partner has approved the data dictionary, controls, contracts, security design, consent handling, retention rules, and legal/compliance process.
+
+It does NOT:
+- Connect to a live credit bureau
+- Submit credit records to a bureau
+- Produce credit scores
+- Approve or decline loans
+- Make automated credit decisions
+
+WHAT IS INCLUDED
+----------------
+- C# / .NET 8 ASP.NET Core API
+- Built-in browser operator dashboard
+- SQLite development database configuration
+- SQL Server production-ready provider configuration
+- Login, JWT authentication, and role-based access
+- BureauAdmin, BureauOperator, and LenderSubmitter roles
+- Lender setup, CSV submission, validation results, and audit events
+- Synthetic CSV sample: samples\synthetic-lender-submission.csv
+
+HOW TO OPEN THE PROJECT
+-----------------------
+1. Extract the ZIP folder anywhere convenient, for example Documents\BureauSync.Api.
+2. Open the folder in Visual Studio, VS Code, or Cursor.
+3. Ensure .NET 8 SDK is installed. This machine's persistent SDK is currently located at:
+   C:\Users\OSINOR TRILLIONS\Downloads\.dotnet\dotnet.exe
+
+HOW TO RUN IT LOCALLY
+---------------------
+Open PowerShell in the project folder and run:
+
+$env:NUGET_PACKAGES='C:\Users\OSINOR TRILLIONS\Downloads\.nuget\packages'
+$env:ASPNETCORE_ENVIRONMENT='Development'
+$env:Jwt__Key='replace-this-with-a-long-random-development-secret-1234567890'
+& 'C:\Users\OSINOR TRILLIONS\Downloads\.dotnet\dotnet.exe' run -c Release
+
+Then open the local web address printed in the PowerShell window. Usually it is similar to:
+http://localhost:5000
+or
+https://localhost:5001
+
+The dashboard is at the root address (/). Swagger API documentation is available in Development mode at /swagger.
+
+FIRST-TIME SETUP
+----------------
+1. On the dashboard login screen, choose "Create the initial BureauAdmin".
+2. Use a secure password with at least 14 characters.
+3. Sign in.
+4. Add a lender in the Lender Directory screen.
+5. Upload samples\synthetic-lender-submission.csv to see ready/review/rejected outcomes.
+6. Review the Submission History and click "View records" to see the reason for each issue.
+
+CSV FORMAT
+----------
+The baseline CSV requires these columns, in this order or any order:
+
+lender_id, borrower_name, identity_id, loan_account_no, loan_amount, outstanding_balance, status, disbursement_date, due_date, repayment_date
+
+Allowed status values:
+ACTIVE, REPAID, SETTLED, DEFAULTED
+
+Dates must use YYYY-MM-DD.
+
+FOR PRODUCTION LATER
+--------------------
+Before any real borrower data or live deployment:
+- Move secrets to a secret manager; never keep them in source code.
+- Use SQL Server with a partner-approved production connection.
+- Add HTTPS/TLS, encryption at rest, role-based database access, monitoring, backups, malware scanning, rate limits, and incident response.
+- Add MFA or Microsoft Entra ID SSO.
+- Perform security testing and a Nigerian privacy/regulatory/compliance review.
+- Get the bureau's real data specification and approved error codes.
+
+PROJECT STATUS
+--------------
+The API and dashboard compile successfully with 0 warnings and 0 errors. SQLite is for local development; SQL Server remains the intended production database provider.

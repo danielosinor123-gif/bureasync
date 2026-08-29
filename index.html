@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BureauSync | Operator Console</title>
+<style>
+:root{
+  --navy:#0f2a3a;--teal:#0d8a88;--teal-light:#14b8b6;--mint:#dcfce7;--paper:#f8fafc;--panel:#ffffff;
+  --ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--red:#dc2626;--red-bg:#fef2f2;--amber:#d97706;--amber-bg:#fffbeb;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--focus:#0d8a88;--shadow:0 1px 3px rgba(15,23,42,.08),0 4px 6px rgba(15,23,42,.05);
+  --radius:8px;--transition:150ms ease
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+html{font-size:14px}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}
+.app{min-height:100vh;display:grid;grid-template-columns:260px 1fr}
+.side{background:var(--navy);color:#fff;padding:28px 20px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{font:700 22px/1.2 Georgia,serif;letter-spacing:-.5px;padding:0 4px}
+.brand mark{color:#67e8f9;background:none;font-style:italic}
+.sub{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#94a3b8;padding:6px 4px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:16px}
+.nav{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.nav button{
+  color:#cbd5e1;background:transparent;border:0;text-align:left;width:100%;
+  padding:12px 14px;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:10px;transition:background var(--transition),color var(--transition)
+}
+.nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.nav button.active{color:#fff;background:var(--teal)}
+.nav button:focus-visible,.button:focus-visible,.link:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.nav button .badge{margin-left:auto;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+.nav button.active .badge{background:rgba(255,255,255,.25)}
+.side footer{margin-top:auto;color:#64748b;border-top:1px solid rgba(255,255,255,.1);padding:16px 4px 0;font-size:12px;line-height:1.6}
+.side footer strong{color:#94a3b8}
+
+.main{max-width:1200px;width:100%;padding:32px 40px;margin:auto}
+@media (max-width:1024px){.app{grid-template-columns:1fr}.side{position:fixed;left:-280px;z-index:40;transition:left var(--transition);box-shadow:var(--shadow)}.side.open{left:0}.main{padding:24px 20px}}
+@media (max-width:640px){.main{padding:20px 16px}}
+
+.top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;flex-wrap:wrap;margin-bottom:24px}
+.eyebrow{font-size:11px;color:var(--teal);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;display:inline-block;margin-bottom:8px}
+.top h1{font:700 34px/1.1 Georgia,serif;letter-spacing:-1px;margin:0 0 6px;color:var(--ink)}
+.top p{color:var(--muted);font-size:15px;margin:0;max-width:520px}
+.user{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);padding:10px 14px;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow)}
+.user .avatar{width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.user .role{background:var(--mint);color:var(--ok);padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.user button{margin-left:8px;border:0;background:transparent;color:var(--teal);font-weight:600;cursor:pointer;padding:6px 10px;border-radius:6px}
+.user button:hover{background:var(--mint)}
+
+.notice{margin:20px 0;background:var(--mint);border-left:4px solid var(--teal);padding:16px 20px;line-height:1.55;border-radius:0 var(--radius) var(--radius) 0;display:flex;align-items:flex-start;gap:12px}
+.notice svg{flex-shrink:0;margin-top:2px;color:var(--teal)}
+.notice strong{color:var(--ink)}
+.notice p{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+.section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:24px}
+.section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.section-header h2{margin:0;font:600 18px/1.3 system-ui;color:var(--ink)}
+.section-header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.section-body{padding:24px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.button{
+  appearance:none;border:0;border-radius:var(--radius);padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all var(--transition)
+}
+.button.primary{background:var(--teal);color:#fff}
+.button.primary:hover{background:#0f7674}
+.button.primary:disabled{background:#94a3b8;cursor:not-allowed}
+.button.secondary{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.button.secondary:hover{background:var(--paper);border-color:#cbd5e1}
+.button.ghost{background:transparent;color:var(--teal);border:1px solid transparent}
+.button.ghost:hover{background:var(--mint)}
+.button.danger{background:var(--red);color:#fff}
+.button.danger:hover{background:#b91c1c}
+.button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.button .spinner{display:none;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.button.loading .spinner{display:block}
+.button.loading .label{opacity:.7}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+@media (max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.metrics{grid-template-columns:1fr}}
+.metric{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);transition:transform var(--transition),box-shadow var(--transition)}
+.metric:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(15,23,42,.1)}
+.metric-value{font:700 36px/1 Georgia,serif;color:var(--teal);display:block}
+.metric-label{display:block;color:var(--muted);font-size:13px;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.metric.ready .metric-value{color:var(--ok)}
+.metric.review .metric-value{color:var(--amber)}
+.metric.rejected .metric-value{color:var(--red)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--line);background:#fafbfc}
+.card-header h3{margin:0;font:600 15px system-ui;color:var(--ink)}
+.card-body{padding:20px}
+
+.form{display:flex;flex-direction:column;gap:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:520px){.form-row{grid-template-columns:1fr}}
+.form label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--ink)}
+.form input,.form select{
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);font:inherit;color:var(--ink);background:var(--panel);
+  transition:border-color var(--transition),box-shadow var(--transition)
+}
+.form input:focus,.form select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,138,136,.15)}
+.form input:invalid:not(:placeholder-shown),.form select:invalid:not(:placeholder-shown){border-color:var(--red)}
+.form small{font-size:12px;color:var(--muted)}
+.error{display:none;color:var(--red);font-size:13px;padding:10px 12px;background:var(--red-bg);border:1px solid #fecaca;border-radius:var(--radius)}
+.error.show{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
+.modal.show{display:flex}
+.modal .dialog{background:var(--panel);border-radius:12px;max-width:480px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 25px 50px rgba(15,23,42,.25);animation:slideUp .25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal .dialog header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line)}
+.modal .dialog header h2{margin:0;font:600 18px system-ui}
+.modal .dialog header button{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;padding:4px;border-radius:6px}
+.modal .dialog header button:hover{color:var(--ink);background:var(--paper)}
+.modal .dialog > p{margin:0 24px 16px;padding:0 24px;color:var(--muted);font-size:14px}
+.modal .dialog .form{padding:0 24px 24px}
+.modal .dialog .actions{justify-content:flex-end;padding:0 24px 24px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line)}
+th{background:#fafbfc;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-size:11px;white-space:nowrap;position:sticky;top:0;z-index:1}
+tbody tr{transition:background var(--transition)}
+tbody tr:hover{background:#fafbfc}
+tbody tr:last-child td{border-bottom:none}
+td{color:var(--ink);vertical-align:top}
+.empty{text-align:center;color:var(--muted);padding:40px 20px!important}
+.status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.status.ready{background:var(--ok-bg);color:var(--ok)}
+.status.review{background:var(--amber-bg);color:var(--amber)}
+.status.rejected{background:var(--red-bg);color:var(--red)}
+.link{background:none;border:none;color:var(--teal);font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px;font:inherit}
+.link:hover{background:var(--mint);text-decoration:none}
+.link:disabled{color:var(--muted);cursor:not-allowed;pointer-events:none}
+
+.tooltip{position:relative;cursor:help}
+.tooltip::after{content:attr(data-tip);position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;transition:all .15s ease;z-index:10;box-shadow:var(--shadow)}
+.tooltip:hover::after{opacity:1;visibility:visible;bottom:120%}
+.tooltip::before{content:"";position:absolute;bottom:118%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--ink);opacity:0;visibility:hidden;transition:all .15s ease}
+.tooltip:hover::before{opacity:1;visibility:visible;bottom:110%}
+
+.record-row{display:none}
+.record-row.open{display:table-row;animation:fadeIn .2s ease}
+.record-detail{background:#fafbfc;padding:16px 20px;border-top:1px solid var(--line)}
+.record-detail .issue{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.record-detail .issue:last-child{border-bottom:none}
+.record-detail .issue-code{font:600 12px monospace;color:var(--red);min-width:160px}
+.record-detail .issue-field{color:var(--muted);font-size:12px;min-width:100px}
+.record-detail .issue-msg{flex:1;color:var(--ink)}
+.record-detail .issue-action{color:var(--teal);font-size:12px;font-weight:500}
+
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.loginbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:48px 40px;max-width:420px;width:100%;box-shadow:var(--shadow)}
+.loginbox .eyebrow{text-align:center}
+.loginbox h1{text-align:center;font:700 32px/1.1 Georgia,serif;letter-spacing:-1px;margin:16px 0 6px;color:var(--ink)}
+.loginbox h1 mark{color:var(--teal);background:none;font-style:italic}
+.loginbox .tag{text-align:center;color:var(--muted);margin:0 0 28px;font-size:14px}
+.loginbox .form{margin-top:8px}
+.loginbox .form .actions{justify-content:flex-end;margin-top:8px}
+.loginbox .form small{display:block;text-align:center;margin-top:16px;color:var(--muted)}
+
+.hidden{display:none!important}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;box-shadow:0 10px 25px rgba(15,23,42,.15);display:flex;align-items:center;gap:12px;min-width:280px;max-width:420px;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+.toast.success{border-left:4px solid var(--ok)}
+.toast.error{border-left:4px solid var(--red)}
+.toast.warning{border-left:4px solid var(--amber)}
+.toast.info{border-left:4px solid var(--teal)}
+.toast .toast-icon{flex-shrink:0}
+.toast .toast-msg{flex:1;font-size:14px;line-height:1.4}
+.toast .toast-close{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;line-height:1}
+.toast .toast-close:hover{color:var(--ink)}
+
+.badge-sm{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.badge-sm.ok{background:var(--ok-bg);color:var(--ok)}
+.badge-sm.warn{background:var(--amber-bg);color:var(--amber)}
+.badge-sm.err{background:var(--red-bg);color:var(--red)}
+.badge-sm.neutral{background:var(--mint);color:var(--teal)}
+
+.help-text{font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+.help-text kbd{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font:inherit;font-size:11px;color:var(--muted)}
+
+.upload-dropzone{border:2px dashed var(--line);border-radius:var(--radius);padding:32px;text-align:center;transition:all var(--transition);cursor:pointer}
+.upload-dropzone:hover,.upload-dropzone.drag{background:var(--mint);border-color:var(--teal)}
+.upload-dropzone.drag{transform:scale(1.01)}
+.upload-dropzone input{display:none}
+.upload-dropzone p{margin:0;color:var(--muted)}
+.upload-dropzone strong{color:var(--ink)}
+.upload-file-name{margin-top:12px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.upload-file-name .remove{color:var(--red);background:none;border:none;cursor:pointer;padding:4px 8px;font:inherit;font-size:12px}
+.upload-file-name .remove:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="loginView" class="login" role="main">
+  <div class="loginbox">
+    <div class="eyebrow">Credit Data Operations</div>
+    <h1>bureau<mark>sync</mark></h1>
+    <p class="tag">Secure operator console for lender-submission quality control</p>
+    <form id="loginForm" class="form" novalidate>
+      <label>Email
+        <input id="loginEmail" type="email" required autocomplete="email" placeholder="admin@example.com" aria-describedby="emailHelp">
+      </label>
+      <label>Password
+        <input id="loginPassword" type="password" required autocomplete="current-password" aria-describedby="passHelp">
+      </label>
+      <div id="loginError" class="error" role="alert" aria-live="polite"></div>
+      <button class="button primary" type="submit"><span class="label">Sign in</span><span class="spinner" aria-hidden="true"></span></button>
+      <small>First time? <button class="link" type="button" onclick="openModal('bootstrapModal')">Create the initial BureauAdmin</button></small>
+    </form>
+  </div>
+</div>
+
+<div id="appView" class="app hidden">
+  <aside class="side" role="navigation" aria-label="Main navigation">
+    <div class="brand">bureau<mark>sync</mark></div>
+    <div class="sub">Operator console</div>
+    <nav class="nav">
+      <button class="active" onclick="showSection('quality')" aria-current="page">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        Quality Gate
+      </button>
+      <button onclick="openModal('lenderModal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Lender Directory
+      </button>
+      <button onclick="openModal('userModal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        User Provisioning
+      </button>
+    </nav>
+    <footer>
+      <strong>Development mode</strong><br>
+      SQLite local database<br><br>
+      No live bureau connection
+    </footer>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="top">
+      <div>
+        <div class="eyebrow">Submission intake · quality gate</div>
+        <h1>Data quality before<br>the credit file.</h1>
+        <p>Review lender submissions, return clear errors, and keep an auditable operational trail.</p>
+      </div>
+      <div class="user">
+        <div class="avatar" aria-hidden="true" id="avatar"></div>
+        <div>
+          <div id="who" style="font-weight:600"></div>
+          <span class="role" id="roleBadge"></span>
+        </div>
+        <button onclick="logout()" aria-label="Sign out">Sign out</button>
+      </div>
+    </header>
+
+    <div class="notice" role="status" aria-live="polite">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <div>
+        <strong>Development safeguard:</strong> use synthetic records only.
+        <p>This environment does not connect to a live credit bureau or approve credit decisions.</p>
+      </div>
+    </div>
+
+    <section id="section-quality" class="section" aria-labelledby="quality-title">
+      <header class="section-header">
+        <div>
+          <h2 id="quality-title">Validate a lender submission</h2>
+          <p>Upload a CSV using the baseline schema. Every record is classified as Ready, Review, or Rejected with a specific reason.</p>
+        </div>
+        <div class="actions">
+          <button class="button primary" onclick="openModal('uploadModal')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="label">Upload CSV</span>
+          </button>
+          <button class="button secondary" onclick="openModal('lenderModal')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span class="label">Add lender</span>
+          </button>
+        </div>
+      </header>
+      <div class="section-body">
+        <div class="metrics" role="region" aria-label="Submission metrics">
+          <div class="metric ready"><strong class="metric-value" id="total">0</strong><span class="metric-label">Records received</span></div>
+          <div class="metric ready"><strong class="metric-value" id="ready">0</strong><span class="metric-label">Ready to ingest</span></div>
+          <div class="metric review"><strong class="metric-value" id="review">0</strong><span class="metric-label">Needs review</span></div>
+          <div class="metric rejected"><strong class="metric-value" id="rejected">0</strong><span class="metric-label">Rejected</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-history" class="section" aria-labelledby="history-title">
+      <header class="section-header">
+        <div>
+          <h2 id="history-title">Submission history</h2>
+          <p>All validated submissions with outcome breakdown</p>
+        </div>
+        <span id="count" class="badge-sm neutral">0 submissions</span>
+      </header>
+      <div class="section-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Submitted</th>
+                <th scope="col">Lender</th>
+                <th scope="col">File</th>
+                <th scope="col">Records</th>
+                <th scope="col">Outcome</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="history">
+              <tr><td colspan="6" class="empty">No submissions yet. Upload your first CSV to get started.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="recordsPanel" class="section hidden" aria-labelledby="records-title">
+      <header class="section-header">
+        <div>
+          <h2 id="records-title">Record-level validation results</h2>
+          <p id="recordsSubtitle">Details for submission <strong id="currentSubmissionFile"></strong></p>
+        </div>
+        <button class="button secondary" onclick="closeRecords()">Close details</button>
+      </header>
+      <div class="section-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" style="width:70px">Row</th>
+                <th scope="col">Account</th>
+                <th scope="col" style="width:130px">Outcome</th>
+                <th scope="col">Issues</th>
+              </tr>
+            </thead>
+            <tbody id="records"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<div id="bootstrapModal" class="modal" role="dialog" aria-labelledby="bootTitle" aria-modal="true">
+  <div class="dialog">
+    <header><h2 id="bootTitle">Create initial BureauAdmin</h2><button onclick="closeModal('bootstrapModal')" aria-label="Close">&times;</button></header>
+    <p>This is available only when no users exist. After setup, administrators provision all subsequent accounts.</p>
+    <form class="form" onsubmit="bootstrap(event)">
+      <label>Email<input id="bootEmail" type="email" required autocomplete="email" placeholder="admin@example.com"></label>
+      <label>Password<input id="bootPassword" type="password" minlength="14" required autocomplete="new-password" placeholder="••••••••••••••"><small>Minimum 14 characters. Use a strong, unique password.</small></label>
+      <div id="bootError" class="error" role="alert" aria-live="polite"></div>
+      <div class="actions"><button class="button primary" type="submit"><span class="label">Create BureauAdmin</span><span class="spinner" aria-hidden="true"></span></button><button type="button" class="button secondary" onclick="closeModal('bootstrapModal')">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="lenderModal" class="modal" role="dialog" aria-labelledby="lenderTitle" aria-modal="true">
+  <div class="dialog">
+    <header><h2 id="lenderTitle">Add lender</h2><button onclick="closeModal('lenderModal')" aria-label="Close">&times;</button></header>
+    <p>Register a lender before accepting its submission files. The code is used as a unique identifier.</p>
+    <form class="form" onsubmit="createLender(event)">
+      <div class="form-row">
+        <label>Lender code<input id="lenderCode" placeholder="LND-001" required autocomplete="off" aria-describedby="codeHelp"></label>
+        <label>Lender name<input id="lenderName" placeholder="Demo Finance Ltd" required autocomplete="off"></label>
+      </div>
+      <small id="codeHelp" class="help-text">Uppercase alphanumeric with hyphens, e.g. LND-001</small>
+      <div id="lenderError" class="error" role="alert" aria-live="polite"></div>
+      <div class="actions"><button class="button primary" type="submit"><span class="label">Add lender</span><span class="spinner" aria-hidden="true"></span></button><button type="button" class="button secondary" onclick="closeModal('lenderModal')">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="userModal" class="modal" role="dialog" aria-labelledby="userTitle" aria-modal="true">
+  <div class="dialog">
+    <header><h2 id="userTitle">Provision user</h2><button onclick="closeModal('userModal')" aria-label="Close">&times;</button></header>
+    <p>Only BureauAdmins can create operator and lender-submitter accounts.</p>
+    <form class="form" onsubmit="createUser(event)">
+      <label>Email<input id="newUserEmail" type="email" required autocomplete="email" placeholder="operator@example.com"></label>
+      <div class="form-row">
+        <label>Password<input id="newUserPassword" type="password" minlength="14" required autocomplete="new-password" placeholder="••••••••••••••"></label>
+        <label>Role<select id="newUserRole"><option value="BureauOperator">BureauOperator</option><option value="LenderSubmitter">LenderSubmitter</option><option value="BureauAdmin">BureauAdmin</option></select></label>
+      </div>
+      <small class="help-text"><kbd>BureauOperator</kbd> full access · <kbd>LenderSubmitter</kbd> upload only · <kbd>BureauAdmin</kbd> user management</small>
+      <div id="userError" class="error" role="alert" aria-live="polite"></div>
+      <div class="actions"><button class="button primary" type="submit"><span class="label">Provision user</span><span class="spinner" aria-hidden="true"></span></button><button type="button" class="button secondary" onclick="closeModal('userModal')">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="uploadModal" class="modal" role="dialog" aria-labelledby="uploadTitle" aria-modal="true">
+  <div class="dialog">
+    <header><h2 id="uploadTitle">Upload lender CSV</h2><button onclick="closeModal('uploadModal')" aria-label="Close">&times;</button></header>
+    <p>Expected columns: <code>lender_id, borrower_name, identity_id, loan_account_no, loan_amount, outstanding_balance, status, disbursement_date, due_date, repayment_date</code></p>
+    <form class="form" onsubmit="uploadSubmission(event)">
+      <label>Lender<select id="uploadLender" required aria-describedby="lenderHelp"><option value="">Select a lender</option></select></label>
+      <small id="lenderHelp" class="help-text">Register a lender first if the list is empty</small>
+      <label>CSV file
+        <div class="upload-dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose CSV file">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;color:var(--muted)" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p><strong>Drag & drop</strong> or <strong>click to browse</strong></p>
+          <p>.csv files only · max 5 MB</p>
+        </div>
+        <input id="uploadFile" type="file" accept=".csv,text/csv" required aria-label="CSV file" hidden>
+        <div id="fileNameDisplay" class="upload-file-name hidden">
+          <span id="selectedFileName"></span>
+          <button type="button" class="remove" onclick="clearFile()">Remove</button>
+        </div>
+      </label>
+      <div id="uploadError" class="error" role="alert" aria-live="polite"></div>
+      <div class="actions"><button class="button primary" type="submit"><span class="label">Validate submission</span><span class="spinner" aria-hidden="true"></span></button><button type="button" class="button secondary" onclick="closeModal('uploadModal')">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const state={token:localStorage.getItem('bs_token'),user:JSON.parse(localStorage.getItem('bs_user')||'null'),lenders:[],currentSubmissionId:null};
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const api=async(path,opt={})=>{const h={...(opt.headers||{})};if(state.token)h.Authorization='Bearer '+state.token;const r=await fetch(path,{...opt,headers:h});if(!r.ok){let e={};try{e=await r.json()}catch{}throw new Error(e.error||'Request failed ('+r.status+')')}return r.status===204?null:r.json()};
+
+function showToast(msg,type='info'){const c=$('#toastContainer');const t=document.createElement('div');t.className='toast '+type;const icons={success:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',error:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};t.innerHTML='<span class="toast-icon">'+icons[type]+'</span><span class="toast-msg">'+msg+'</span><button class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>';c.appendChild(t);setTimeout(()=>t.remove(),6000)}
+function openModal(id){$('#'+id).classList.add('show');if(id==='uploadModal')loadLenders();$('#'+id).querySelector('input,select')?.focus()}
+function closeModal(id){$('#'+id).classList.remove('show');$('#'+id).querySelectorAll('.error').forEach(e=>e.classList.remove('show'))}
+function error(id,msg){const el=$('#'+id);el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
+function clearError(id){$('#'+id).classList.remove('show')}
+function setLoading(btn,on){btn.classList.toggle('loading',on);btn.disabled=on}
+function logout(){localStorage.clear();location.reload()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]))}
+
+async function login(e){e.preventDefault();clearError('loginError');const btn=e.target.querySelector('button[type=submit]');setLoading(btn,true);try{const d=await api('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#loginEmail').value,password:$('#loginPassword').value})});state.token=d.accessToken;state.user={email:$('#loginEmail').value,role:d.role};localStorage.setItem('bs_token',state.token);localStorage.setItem('bs_user',JSON.stringify(state.user));showToast('Welcome back, '+esc(state.user.email),'success');showApp()}catch(x){error('loginError',x.message);showToast(x.message,'error')}finally{setLoading(btn,false)}}
+
+async function bootstrap(e){e.preventDefault();clearError('bootError');const btn=e.target.querySelector('button[type=submit]');setLoading(btn,true);try{await api('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#bootEmail').value,password:$('#bootPassword').value,role:'BureauAdmin'})});showToast('BureauAdmin created successfully','success');closeModal('bootstrapModal');$('#loginEmail').value=$('#bootEmail').value;$('#loginPassword').value=$('#bootPassword').value;$('#loginForm').requestSubmit()}catch(x){error('bootError',x.message);showToast(x.message,'error')}finally{setLoading(btn,false)}}
+
+async function createLender(e){e.preventDefault();clearError('lenderError');const btn=e.target.querySelector('button[type=submit]');setLoading(btn,true);try{await api('/api/lenders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('#lenderCode').value.trim().toUpperCase(),name:$('#lenderName').value.trim()})});showToast('Lender added','success');closeModal('lenderModal');e.target.reset();await loadLenders()}catch(x){error('lenderError',x.message);showToast(x.message,'error')}finally{setLoading(btn,false)}}
+
+async function createUser(e){e.preventDefault();clearError('userError');const btn=e.target.querySelector('button[type=submit]');setLoading(btn,true);try{await api('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#newUserEmail').value,password:$('#newUserPassword').value,role:$('#newUserRole').value})});showToast('User provisioned','success');closeModal('userModal');e.target.reset()}catch(x){error('userError',x.message);showToast(x.message,'error')}finally{setLoading(btn,false)}}
+
+async function loadLenders(){try{state.lenders=await api('/api/lenders');const sel=$('#uploadLender');sel.innerHTML=state.lenders.map(x=>'<option value="'+x.id+'">'+esc(x.code)+' — '+esc(x.name)+'</option>').join('')||'<option value="">No lenders registered</option>';}catch(x){console.error(x)}}
+
+async function uploadSubmission(e){e.preventDefault();clearError('uploadError');const id=$('#uploadLender').value,file=$('#uploadFile').files[0];if(!id||!file){showToast('Select a lender and a CSV file','warning');return}const btn=e.target.querySelector('button[type=submit]');setLoading(btn,true);const fd=new FormData();fd.append('file',file);try{await api('/api/lenders/'+id+'/submissions',{method:'POST',body:fd});showToast('Submission validated','success');closeModal('uploadModal');e.target.reset();$('#fileNameDisplay').classList.add('hidden');await loadHistory()}catch(x){error('uploadError',x.message);showToast(x.message,'error')}finally{setLoading(btn,false)}}
+
+async function loadHistory(){try{const rows=await api('/api/submissions');$('#count').textContent=rows.length+' submission'+(rows.length===1?'':'s');let totals={total:0,ready:0,review:0,rejected:0};rows.forEach(x=>{totals.total+=x.total;totals.ready+=x.ready;totals.review+=x.review;totals.rejected+=x.rejected});for(const k of Object.keys(totals))$('#'+k).textContent=totals[k];$('#history').innerHTML=rows.length?rows.map(x=>'<tr><td>'+new Date(x.submittedAt).toLocaleString()+'</td><td><b>'+esc(x.lenderCode)+'</b></td><td>'+esc(x.fileName)+'</td><td>'+x.total+'</td><td><span class="status '+(x.rejected?'rejected':x.review?'review':'ready')+'">'+x.ready+' ready · '+x.review+' review · '+x.rejected+' rejected</span></td><td><button class="link" onclick="viewRecords(\''+x.id+'\',\''+esc(x.fileName)+'\')">View records</button></td></tr>').join(''):'<tr><td colspan="6" class="empty">No submissions yet. Upload your first CSV to get started.</td></tr>';}catch(x){console.error(x);showToast('Failed to load history','error')}}
+
+function outcome(x){return x.rejected?'rejected':x.review?'review':'ready'}
+
+async function viewRecords(id,fileName){state.currentSubmissionId=id;$('#recordsPanel').classList.remove('hidden');$('#currentSubmissionFile').textContent=fileName;try{const rows=await api('/api/submissions/'+id+'/records');$('#records').innerHTML=rows.map(x=>'<tr class="'+(x.issues.length?'tooltip':'')+'" data-tip="'+(x.issues.length?esc(x.issues.map(i=>i.ruleCode+': '+i.message).join('; ')):'No issues')+'"><td>'+x.rowNumber+'</td><td><code>'+esc(x.accountNumber)+'</code></td><td><span class="status '+x.outcome.toLowerCase()+'">'+esc(x.outcome)+'</span></td><td>'+(!x.issues.length?'<span style="color:var(--muted)">—</span>':x.issues.map(i=>'<div class="issue"><span class="issue-code">'+esc(i.ruleCode)+'</span><span class="issue-field">'+esc(i.field)+'</span><span class="issue-msg">'+esc(i.message)+'</span><span class="issue-action">'+esc(i.suggestedAction)+'</span></div>').join(''))+'</td></tr>').join('');}catch(x){showToast('Failed to load records','error');console.error(x)}}
+
+function closeRecords(){$('#recordsPanel').classList.add('hidden');state.currentSubmissionId=null}
+
+function showApp(){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');const u=state.user;$('#who').textContent=u.email;$('#roleBadge').textContent=u.role;$('#avatar').textContent=u.email.charAt(0).toUpperCase();Promise.all([loadLenders(),loadHistory()])}
+
+$('#loginForm').addEventListener('submit',login);
+
+const dz=$('#dropzone'),fileInput=$('#uploadFile'),fileDisplay=$('#fileNameDisplay'),fileNameEl=$('#selectedFileName');
+dz.addEventListener('click',()=>fileInput.click());
+dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')fileInput.click()});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0])});
+function handleFile(f){if(!f.name.toLowerCase().endsWith('.csv')){showToast('Please select a .csv file','warning');return}if(f.size>5242880){showToast('File exceeds 5 MB limit','warning');return}fileNameEl.textContent=f.name+' ('+(f.size/1024).toFixed(1)+' KB)';fileDisplay.classList.remove('hidden');dz.style.display='none';showToast('File selected: '+f.name,'info')};
+function clearFile(){fileInput.value='';fileDisplay.classList.add('hidden');dz.style.display='flex'};
+
+if(state.token&&state.user)showApp();
+</script>
+</body>
+</html>

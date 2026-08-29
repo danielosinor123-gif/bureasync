@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BureauSync | Operator Console</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{margin:0;background:#f8fafc;color:#1e293b;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.box{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;max-width:420px;width:100%;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+h1{font:700 28px/1.2 Georgia,serif;letter-spacing:-1px;margin:0 0 8px;color:#1e293b}
+h1 mark{color:#0d8a88;background:none;font-style:italic}
+p{color:#64748b;margin:0 0 24px}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;margin-bottom:16px;color:#1e293b}
+input{padding:12px;border:1px solid #e2e8f0;border-radius:8px;font:inherit}
+input:focus{outline:none;border-color:#0d8a88;box-shadow:0 0 0 3px rgba(13,138,136,.15)}
+button{width:100%;padding:12px;background:#0d8a88;color:#fff;border:none;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+button:hover{background:#0f7674}
+.error{color:#dc2626;font-size:13px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:16px;display:none}
+.error.show{display:block}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>bureau<mark>sync</mark></h1>
+<p>Sign in to continue</p>
+<div id="err" class="error"></div>
+<form id="f">
+<label>Email<input id="e" type="email" required autocomplete="email" value="admin@example.com"></label>
+<label>Password<input id="p" type="password" required autocomplete="current-password" value="longpassword123456"></label>
+<button type="submit">Sign in</button>
+</form>
+</div>
+<script src="/config.js"></script>
+<script>
+const API=(window.API_BASE||"");
+document.getElementById('f').onsubmit=async function(e){e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=1;btn.textContent='Signing in...';try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e.target.e.value,password:e.target.p.value})});if(!r.ok)throw await r.json();const d=await r.json();localStorage.setItem('bs_token',d.accessToken);localStorage.setItem('bs_user',JSON.stringify({email:e.target.e.value,role:d.role}));location.href='/app.html';}catch(x){document.getElementById('err').textContent=x.error||x.message||'Login failed';document.getElementById('err').classList.add('show');btn.disabled=0;btn.textContent='Sign in';}};
+if(localStorage.getItem('bs_token'))location.href='/app.html';
+</script>
+</body>
+</html>

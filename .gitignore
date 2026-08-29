@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+appsettings.Production.json
+.env
+secrets.json
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.zip
+*.pdf
+1
+.DS_Store
