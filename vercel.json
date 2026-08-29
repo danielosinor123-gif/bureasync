@@ -13,7 +13,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://bureasync-api.up.railway.app/api/$1" },
-    { "source": "/health", "destination": "https://bureasync-api.up.railway.app/health" }
+    { "source": "/api/(.*)", "destination": "https://bureasync-production.up.railway.app/api/$1" },
+    { "source": "/health", "destination": "https://bureasync-production.up.railway.app/health" }
   ]
 }
