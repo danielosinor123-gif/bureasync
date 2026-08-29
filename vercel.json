@@ -1,18 +1,9 @@
 {
   "version": 2,
-  "outputDirectory": "wwwroot",
-  "cleanUrls": true,
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    }
+  "builds": [
+    { "src": "BureauSync.Api.csproj", "use": "@vercel/dotnet" }
   ],
-  "rewrites": [
-    { "source": "/health", "destination": "/health" }
+  "routes": [
+    { "src": "/(.*)", "dest": "BureauSync.Api.csproj" }
   ]
 }

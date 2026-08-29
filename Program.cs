@@ -25,7 +25,7 @@ builder.Services.AddCors(o=>o.AddPolicy("frontend", p=>{
 }));
 builder.Services.Configure<ForwardedHeadersOptions>(o=>{o.ForwardedHeaders=ForwardedHeaders.XForwardedFor|ForwardedHeaders.XForwardedProto; o.KnownNetworks.Clear(); o.KnownProxies.Clear();});
 var app=builder.Build();
-if(app.Environment.IsDevelopment()&&provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){using var scope=app.Services.CreateScope();scope.ServiceProvider.GetRequiredService<BureauSyncDb>().Database.EnsureCreated();}
+if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){using var scope=app.Services.CreateScope();try{scope.ServiceProvider.GetRequiredService<BureauSyncDb>().Database.EnsureCreated();}catch(Exception ex){Console.WriteLine($"DB EnsureCreated failed: {ex.Message}");}}
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
