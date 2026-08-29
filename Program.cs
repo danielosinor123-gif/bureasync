@@ -29,7 +29,7 @@ if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){using var scope
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
-app.UseExceptionHandler(e=>e.Run(async c=>{c.Response.StatusCode=500;await c.Response.WriteAsJsonAsync(new{error="Unexpected server error.",traceId=c.TraceIdentifier});}));
+app.UseExceptionHandler(e=>e.Run(async c=>{var ex=c.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error; c.Response.StatusCode=500;await c.Response.WriteAsJsonAsync(new{error=ex?.Message??"Unexpected",stack=ex?.StackTrace, inner=ex?.InnerException?.Message, traceId=c.TraceIdentifier});}));
 if(!string.Equals(Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT"), "1", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHttpsRedirection();
