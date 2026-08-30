@@ -62,7 +62,7 @@ console.log('state:', state);
 if(!state.token||!state.user){console.log('redirecting to /');location.href='/';}
 const $=s=>document.querySelector(s);
 console.log('$ defined');
-const api=async(path,opt={})=>{const h={...(opt.headers||{})};if(state.token)h.Authorization='Bearer '+state.token;const url=(API||"")+path;const r=await fetch(url,{...opt,headers:h});if(!r.ok){let e={};try{e=await r.json()}catch{}throw new Error(e.error||'Request failed ('+r.status+')')}return r.status===204?null:r.json()};
+const api=async(path,opt={})=>{const h={...(opt.headers||{})};if(state.token)h.Authorization='Bearer '+state.token;const url=(API||"")+path;const r=await fetch(url,{...opt,headers:h});if(!r.ok){if(r.status===401){localStorage.removeItem('bs_token');localStorage.removeItem('bs_user');showToast('Session expired — please sign in again','error');setTimeout(()=>location.href='/',900);let e={};try{e=await r.json()}catch{}throw new Error(e.error||'Session expired (401) — please sign in again')}let e={};try{e=await r.json()}catch{}throw new Error(e.error||'Request failed ('+r.status+')')}return r.status===204?null:r.json()};
 function showToast(msg,type='info'){const c=$('#toastContainer');const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;c.appendChild(t);setTimeout(()=>t.remove(),6000)}
 function openModal(id){$('#'+id).classList.add('show');if(id==='uploadModal')loadLenders()}
 function closeModal(id){$('#'+id).classList.remove('show');$('#'+id).querySelectorAll('.error').forEach(e=>e.classList.remove('show'))}
