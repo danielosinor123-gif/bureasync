@@ -13,7 +13,7 @@ if(key.Length<32)throw new InvalidOperationException("Set Jwt:Key through user s
 var connection=builder.Configuration.GetConnectionString("BureauSync")??throw new InvalidOperationException("BureauSync connection string missing.");
 var provider=builder.Configuration["DatabaseProvider"]??"SqlServer";
 Console.WriteLine($"DatabaseProvider: {provider}");
-builder.Services.AddDbContext<BureauSyncDb>(x=>{if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase))x.UseSqlite(connection);else x.UseSqlServer(connection);});
+builder.Services.AddDbContext<BureauSyncDb>(x=>{if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase))x.UseSqlite(connection);else if(provider.Equals("Postgres",StringComparison.OrdinalIgnoreCase)||provider.Equals("Postgresql",StringComparison.OrdinalIgnoreCase)||provider.Equals("Npgsql",StringComparison.OrdinalIgnoreCase))x.UseNpgsql(connection);else x.UseSqlServer(connection);});
 builder.Services.AddScoped<CsvValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -44,6 +44,24 @@ if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase)){
             db.SaveChanges();
         }
     }catch(Exception ex){Console.WriteLine($"DB initialization failed: {ex.Message}");}
+}
+if(provider.Equals("Postgres",StringComparison.OrdinalIgnoreCase)||provider.Equals("Postgresql",StringComparison.OrdinalIgnoreCase)||provider.Equals("Npgsql",StringComparison.OrdinalIgnoreCase)){
+    using var scope=app.Services.CreateScope();
+    var db=scope.ServiceProvider.GetRequiredService<BureauSyncDb>();
+    try{
+        db.Database.Migrate();
+        if(!db.Lenders.Any()){
+            db.Lenders.Add(new Lender{
+                Code="LND-001",
+                Name="First Bank Nigeria",
+                SwiftBic="FBNINLLA",
+                CbnLicense="CBN/BD/2023/001",
+                Lei="213800X5R8QZ7J4K2L12",
+                CustomId="NUBAN-011"
+            });
+            db.SaveChanges();
+        }
+    }catch(Exception ex){Console.WriteLine($"Postgres DB initialization failed: {ex.Message}");}
 }
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
