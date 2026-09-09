@@ -57,7 +57,7 @@ if(provider.Equals("Postgres",StringComparison.OrdinalIgnoreCase)||provider.Equa
     using var scope=app.Services.CreateScope();
     var db=scope.ServiceProvider.GetRequiredService<BureauSyncDb>();
     try{
-        db.Database.Migrate();
+        db.Database.EnsureCreated();
         if(!db.Lenders.Any()){
             db.Lenders.Add(new Lender{
                 Code="LND-001",
