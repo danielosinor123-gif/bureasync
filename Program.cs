@@ -1,3 +1,4 @@
+#pragma warning disable CS0162,CS1998,CS9113
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;

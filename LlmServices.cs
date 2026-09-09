@@ -1,3 +1,4 @@
+#pragma warning disable CS0162,CS1998,CS9113
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -58,7 +59,7 @@ public class LlmBackgroundQueue
     public int Count => _q.Count;
 }
 
-public class LlmBackgroundWorker(LlmBackgroundQueue queue, IServiceScopeFactory scopeFactory, ILogger<LlmBackgroundWorker> log) : BackgroundService
+public class LlmBackgroundWorker(LlmBackgroundQueue queue, ILogger<LlmBackgroundWorker> log) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -193,7 +194,7 @@ public class LlmColumnMapper(OllamaClient ollama, BureauSyncDb db, ILogger<LlmCo
 }
 
 // Job 3: Correction drafting — template + constrained narrative only
-public class CorrectionDraftService(OllamaClient ollama, IServiceScopeFactory scopeFactory, LlmBackgroundQueue queue, ILogger<CorrectionDraftService> log)
+public class CorrectionDraftService(OllamaClient ollama, IServiceScopeFactory scopeFactory, LlmBackgroundQueue queue)
 {
     private static readonly Dictionary<string,string> Templates = new()
     {
