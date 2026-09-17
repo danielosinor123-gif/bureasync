@@ -20,7 +20,7 @@ public class OllamaClient(HttpClient http, IConfiguration cfg, ILogger<OllamaCli
         var url = $"{Endpoint.TrimEnd('/')}/api/generate";
         var payload = new { model = Model, prompt, stream = false, format, options = new { temperature = 0.2, num_predict = 512 } };
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(120));
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
         try
         {
             var resp = await http.PostAsJsonAsync(url, payload, cts.Token);
