@@ -7,6 +7,7 @@ using System.Text.Json;
 using BureauSync.Api;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 var builder=WebApplication.CreateBuilder(args);
@@ -26,6 +27,7 @@ builder.Services.AddScoped<RootCauseClassificationService>();
 builder.Services.AddScoped<CorrectionDraftService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.ConfigureHttpJsonOptions(o=>{o.SerializerOptions.PropertyNameCaseInsensitive=true;});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x=>x.TokenValidationParameters=new TokenValidationParameters{ValidateIssuer=true,ValidIssuer=builder.Configuration["Jwt:Issuer"],ValidateAudience=true,ValidAudience=builder.Configuration["Jwt:Audience"],ValidateIssuerSigningKey=true,IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),ValidateLifetime=true,ClockSkew=TimeSpan.FromSeconds(30)});
 builder.Services.AddAuthorization();
 builder.Services.AddCors(o=>o.AddPolicy("frontend", p=>{
@@ -85,8 +87,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 if(app.Environment.IsDevelopment()){app.UseSwagger();app.UseSwaggerUI();}
 app.MapGet("/health",()=>Results.Ok(new{status="ok",service="BureauSync.Api"})).AllowAnonymous();
-app.MapPost("/api/auth/register",async(RegisterRequest r,BureauSyncDb db)=>{if(await db.Users.AnyAsync())return Results.StatusCode(StatusCodes.Status403Forbidden);if(r.Password.Length<14)return Results.BadRequest(new{error="Password must be at least 14 characters."});if(r.Role!=Roles.Admin)return Results.BadRequest(new{error="The one-time bootstrap account must be a BureauAdmin."});var email=r.Email.Trim().ToLowerInvariant();db.Users.Add(new User{Email=email,PasswordHash=HashPassword(r.Password),Role=Roles.Admin});await db.SaveChangesAsync();return Results.Created("/api/auth/login",new{message="Initial BureauAdmin account created. Use the authenticated user endpoint to provision additional users."});}).AllowAnonymous();
-app.MapPost("/api/auth/login",async(LoginRequest r,BureauSyncDb db)=>{var u=await db.Users.SingleOrDefaultAsync(x=>x.Email==r.Email.Trim().ToLowerInvariant());if(u is null||!u.IsActive||!VerifyPassword(r.Password,u.PasswordHash))return Results.Unauthorized();return Results.Ok(IssueToken(u,builder.Configuration,key));}).AllowAnonymous();
+app.MapPost("/api/auth/register",async([FromBody]RegisterRequest r,BureauSyncDb db)=>{if(await db.Users.AnyAsync())return Results.StatusCode(StatusCodes.Status403Forbidden);if(r.Password.Length<14)return Results.BadRequest(new{error="Password must be at least 14 characters."});if(r.Role!=Roles.Admin)return Results.BadRequest(new{error="The one-time bootstrap account must be a BureauAdmin."});var email=r.Email.Trim().ToLowerInvariant();db.Users.Add(new User{Email=email,PasswordHash=HashPassword(r.Password),Role=Roles.Admin});await db.SaveChangesAsync();return Results.Created("/api/auth/login",new{message="Initial BureauAdmin account created. Use the authenticated user endpoint to provision additional users."});}).AllowAnonymous();
+app.MapPost("/api/auth/login",async([FromBody]LoginRequest r,BureauSyncDb db)=>{var u=await db.Users.SingleOrDefaultAsync(x=>x.Email==r.Email.Trim().ToLowerInvariant());if(u is null||!u.IsActive||!VerifyPassword(r.Password,u.PasswordHash))return Results.Unauthorized();return Results.Ok(IssueToken(u,builder.Configuration,key));}).AllowAnonymous();
 var api=app.MapGroup("/api").RequireAuthorization();
 api.MapPost("/users",async(RegisterRequest r,BureauSyncDb db,ClaimsPrincipal p)=>{if(!p.IsInRole(Roles.Admin))return Results.Forbid();if(r.Password.Length<14)return Results.BadRequest(new{error="Password must be at least 14 characters."});if(!new[]{Roles.Admin,Roles.Operator,Roles.Submitter}.Contains(r.Role))return Results.BadRequest(new{error="Invalid role."});var email=r.Email.Trim().ToLowerInvariant();if(await db.Users.AnyAsync(x=>x.Email==email))return Results.Conflict(new{error="Email already exists."});var user=new User{Email=email,PasswordHash=HashPassword(r.Password),Role=r.Role};db.Users.Add(user);Audit(db,p,"User.Provisioned","User",user.Id.ToString(),user.Role);await db.SaveChangesAsync();return Results.Created("/api/users/"+user.Id,new{user.Id,user.Email,user.Role});}).RequireAuthorization(x=>x.RequireRole(Roles.Admin));
 api.MapPost("/lenders",async(LenderRequest r,BureauSyncDb db,ClaimsPrincipal p,HttpContext ctx)=>{
