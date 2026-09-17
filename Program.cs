@@ -28,7 +28,8 @@ builder.Services.AddScoped<CorrectionDraftService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureHttpJsonOptions(o=>{o.SerializerOptions.PropertyNameCaseInsensitive=true;});
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x=>x.TokenValidationParameters=new TokenValidationParameters{ValidateIssuer=true,ValidIssuer=builder.Configuration["Jwt:Issuer"],ValidateAudience=true,ValidAudience=builder.Configuration["Jwt:Audience"],ValidateIssuerSigningKey=true,IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),ValidateLifetime=true,ClockSkew=TimeSpan.FromSeconds(30)});
+var signingKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)){KeyId="default"};
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x=>x.TokenValidationParameters=new TokenValidationParameters{ValidateIssuer=true,ValidIssuer=builder.Configuration["Jwt:Issuer"],ValidateAudience=true,ValidAudience=builder.Configuration["Jwt:Audience"],ValidateIssuerSigningKey=true,IssuerSigningKey=signingKey,ValidateLifetime=true,ClockSkew=TimeSpan.FromSeconds(30)});
 builder.Services.AddAuthorization();
 builder.Services.AddCors(o=>o.AddPolicy("frontend", p=>{
  var origins = builder.Configuration["FrontendUrl"]?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
