@@ -85,11 +85,11 @@ if(!string.Equals(Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT"), 
 }
 app.UseCors("frontend");
 app.UseAuthentication();
+// Simple API key auth for LLM endpoints and submissions (bypass broken JWT) - must run BEFORE UseAuthorization
+app.Use(async(ctx,next)=>{if(ctx.Request.Path.StartsWithSegments("/api/llm")||ctx.Request.Path.StartsWithSegments("/api/lenders/")&&ctx.Request.Method=="POST"){var apiKey=ctx.Request.Headers["X-Api-Key"].FirstOrDefault();var expected=builder.Configuration["Llm:ApiKey"]??"llm-secret-key-change-in-production";if(apiKey!=expected){ctx.Response.StatusCode=401;await ctx.Response.WriteAsJsonAsync(new{error="Invalid API key"});return;}}await next();});
+
 app.UseAuthorization();
 if(app.Environment.IsDevelopment()){app.UseSwagger();app.UseSwaggerUI();}
-
-// Simple API key auth for LLM endpoints and submissions (bypass broken JWT)
-app.Use(async(ctx,next)=>{if(ctx.Request.Path.StartsWithSegments("/api/llm")||ctx.Request.Path.StartsWithSegments("/api/lenders/")&&ctx.Request.Method=="POST"){var apiKey=ctx.Request.Headers["X-Api-Key"].FirstOrDefault();var expected=builder.Configuration["Llm:ApiKey"]??"llm-secret-key-change-in-production";if(apiKey!=expected){ctx.Response.StatusCode=401;await ctx.Response.WriteAsJsonAsync(new{error="Invalid API key"});return;}}await next();});
 
 app.MapGet("/health",()=>Results.Ok(new{status="ok",service="BureauSync.Api"})).AllowAnonymous();
 app.MapPost("/api/auth/test-json",async(HttpContext ctx)=>{ctx.Request.EnableBuffering();using var ms=new MemoryStream();await ctx.Request.Body.CopyToAsync(ms);var bytes=ms.ToArray();var body=System.Text.Encoding.UTF8.GetString(bytes);var hex=BitConverter.ToString(bytes);try{var fixedJson=FixJson(body);var r=System.Text.Json.JsonSerializer.Deserialize<TestJsonRequest>(fixedJson,new System.Text.Json.JsonSerializerOptions{PropertyNameCaseInsensitive=true});if(r is null)return Results.BadRequest(new{error="Deserialization returned null",rawBody=body,fixedJson=fixedJson,bodyLength=body.Length,hex=hex});return Results.Ok(new{received=r.Value,rawBody=body,fixedJson=fixedJson,hex=hex});}catch(Exception ex){return Results.BadRequest(new{error="Deserialization failed",exception=ex.Message,rawBody=body,bodyLength=body.Length,hex=hex});}}).AllowAnonymous();
