@@ -18,7 +18,7 @@ var provider=builder.Configuration["DatabaseProvider"]??"SqlServer";
 Console.WriteLine($"DatabaseProvider: {provider}");
 builder.Services.AddDbContext<BureauSyncDb>(x=>{if(provider.Equals("Sqlite",StringComparison.OrdinalIgnoreCase))x.UseSqlite(connection);else if(provider.Equals("Postgres",StringComparison.OrdinalIgnoreCase)||provider.Equals("Postgresql",StringComparison.OrdinalIgnoreCase)||provider.Equals("Npgsql",StringComparison.OrdinalIgnoreCase))x.UseNpgsql(connection);else x.UseSqlServer(connection);});
 builder.Services.AddScoped<CsvValidator>();
-builder.Services.AddHttpClient<OllamaClient>();
+builder.Services.AddHttpClient<OllamaClient>(c=>c.Timeout=TimeSpan.FromMinutes(5));
 builder.Services.AddSingleton<LlmBackgroundQueue>();
 builder.Services.AddHostedService<LlmBackgroundWorker>();
 builder.Services.AddScoped<LlmColumnMapper>();
