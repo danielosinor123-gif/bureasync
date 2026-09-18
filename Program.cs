@@ -86,7 +86,7 @@ if(!string.Equals(Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT"), 
 app.UseCors("frontend");
 
 // Simple API key auth for LLM endpoints and submissions (bypass broken JWT) - must run BEFORE UseAuthentication
-app.Use(async(ctx,next)=>{var path=ctx.Request.Path.Value;if(path!=null&&(path.StartsWith("/api/llm",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/api/lenders/",StringComparison.OrdinalIgnoreCase)&&ctx.Request.Method=="POST")){var apiKey=ctx.Request.Headers["X-Api-Key"].FirstOrDefault();var expected=builder.Configuration["Llm:ApiKey"]??"llm-secret-key-change-in-production";if(apiKey!=expected){ctx.Response.StatusCode=401;await ctx.Response.WriteAsJsonAsync(new{error="Invalid API key",path});return;}}await next();});
+app.Use(async(ctx,next)=>{var path=ctx.Request.Path.Value;if(path!=null&&(path.StartsWith("/api/llm",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/api/lenders/",StringComparison.OrdinalIgnoreCase)&&ctx.Request.Method=="POST")){var apiKey=ctx.Request.Headers["X-Api-Key"].FirstOrDefault();var authHeader=ctx.Request.Headers["Authorization"].FirstOrDefault();if(!string.IsNullOrEmpty(authHeader)&&authHeader.StartsWith("Bearer ",StringComparison.OrdinalIgnoreCase)){await next();return;}var expected=builder.Configuration["Llm:ApiKey"]??"llm-secret-key-change-in-production";if(apiKey!=expected){ctx.Response.StatusCode=401;await ctx.Response.WriteAsJsonAsync(new{error="Invalid API key",path});return;}}await next();});
 
 app.UseAuthentication();
 app.UseAuthorization();
