@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 var builder=WebApplication.CreateBuilder(args);
 var key=builder.Configuration["Jwt:Key"]??"";
 if(key.Length<32)throw new InvalidOperationException("Set Jwt:Key through user secrets or environment variables; it must be 32+ characters.");
@@ -29,7 +30,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureHttpJsonOptions(o=>{o.SerializerOptions.PropertyNameCaseInsensitive=true;});
 var signingKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x=>{x.TokenHandlers.Clear();x.TokenHandlers.Add(new JwtSecurityTokenHandler());x.TokenValidationParameters=new TokenValidationParameters{ValidateIssuer=true,ValidIssuer=builder.Configuration["Jwt:Issuer"],ValidateAudience=true,ValidAudience=builder.Configuration["Jwt:Audience"],ValidateIssuerSigningKey=true,IssuerSigningKey=signingKey,ValidateLifetime=true,ClockSkew=TimeSpan.FromSeconds(30)};});
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x=>{x.TokenHandlers.Clear();x.TokenHandlers.Add(new NoKidJwtHandler());x.TokenValidationParameters=new TokenValidationParameters{ValidateIssuer=true,ValidIssuer=builder.Configuration["Jwt:Issuer"],ValidateAudience=true,ValidAudience=builder.Configuration["Jwt:Audience"],ValidateIssuerSigningKey=true,IssuerSigningKey=signingKey,ValidateLifetime=true,ClockSkew=TimeSpan.FromSeconds(30)};});
 builder.Services.AddAuthorization();
 builder.Services.AddCors(o=>o.AddPolicy("frontend", p=>{
  var origins = builder.Configuration["FrontendUrl"]?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -131,7 +132,16 @@ llmApi.MapPost("/correction/{recordId:guid}",(Guid recordId,CorrectionDraftServi
 llmApi.MapGet("/feedback/export",async(BureauSyncDb db)=>{var items=await db.CorrectionDrafts.Where(x=>x.OperatorStatus==CorrectionOperatorStatus.Approved).Select(x=>new{x.Id,x.SubmissionRecordId,x.RootCauseClassificationId,x.BureauFormat,x.GeneratedNarrative,x.RenderedDocument,x.OperatorStatus,x.CreatedAt}).ToListAsync();var json=System.Text.Json.JsonSerializer.Serialize(items,new JsonSerializerOptions{WriteIndented=true});return Results.Text(json,"application/json");});
 
 app.Run();
-static string HashPassword(string password){var salt=RandomNumberGenerator.GetBytes(16);var hash=Rfc2898DeriveBytes.Pbkdf2(password,salt,310000,HashAlgorithmName.SHA256,32);return Convert.ToBase64String(salt)+":"+Convert.ToBase64String(hash);}static bool VerifyPassword(string p,string saved){var parts=saved.Split(':');if(parts.Length!=2)return false;var actual=Rfc2898DeriveBytes.Pbkdf2(p,Convert.FromBase64String(parts[0]),310000,HashAlgorithmName.SHA256,32);return CryptographicOperations.FixedTimeEquals(actual,Convert.FromBase64String(parts[1]));}static object IssueToken(User u,IConfiguration c,string key){var exp=DateTime.UtcNow.AddMinutes(c.GetValue<int>("Jwt:AccessTokenMinutes"));var claims=new[]{new Claim(JwtRegisteredClaimNames.Sub,u.Id.ToString()),new Claim(ClaimTypes.NameIdentifier,u.Id.ToString()),new Claim(ClaimTypes.Email,u.Email),new Claim(ClaimTypes.Role,u.Role)};var signingKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));var creds=new SigningCredentials(signingKey,SecurityAlgorithms.HmacSha256);var jwt=new JwtSecurityToken(c["Jwt:Issuer"],c["Jwt:Audience"],claims,expires:exp,signingCredentials:creds);return new{accessToken=new JwtSecurityTokenHandler().WriteToken(jwt),expiresAt=exp,role=u.Role};}static void Audit(BureauSyncDb db,ClaimsPrincipal p,string action,string type,string id,string detail){var actor=Guid.TryParse(p.FindFirstValue(ClaimTypes.NameIdentifier),out var value)?value:(Guid?)null;db.AuditEvents.Add(new AuditEvent{ActorId=actor,Action=action,EntityType=type,EntityId=id,Detail=detail});}static object Summary(Submission s,Lender l)=>new SubmissionSummary(s.Id,l.Code,s.FileName,s.State,s.Total,s.Ready,s.Review,s.Rejected,s.SubmittedAt);
+static string HashPassword(string password){var salt=RandomNumberGenerator.GetBytes(16);var hash=Rfc2898DeriveBytes.Pbkdf2(password,salt,310000,HashAlgorithmName.SHA256,32);return Convert.ToBase64String(salt)+":"+Convert.ToBase64String(hash);}static bool VerifyPassword(string p,string saved){var parts=saved.Split(':');if(parts.Length!=2)return false;var actual=Rfc2898DeriveBytes.Pbkdf2(p,Convert.FromBase64String(parts[0]),310000,HashAlgorithmName.SHA256,32);return CryptographicOperations.FixedTimeEquals(actual,Convert.FromBase64String(parts[1]));}static object IssueToken(User u,IConfiguration c,string key){var exp=DateTime.UtcNow.AddMinutes(c.GetValue<int>("Jwt:AccessTokenMinutes"));var claims=new[]{new Claim(JwtRegisteredClaimNames.Sub,u.Id.ToString()),new Claim(ClaimTypes.NameIdentifier,u.Id.ToString()),new Claim(ClaimTypes.Email,u.Email),new Claim(ClaimTypes.Role,u.Role)};var signingKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));var creds=new SigningCredentials(signingKey,SecurityAlgorithms.HmacSha256);var jwt=new JwtSecurityToken(c["Jwt:Issuer"],c["Jwt:Audience"],claims,expires:exp,signingCredentials:creds);return new{accessToken=new JwtSecurityTokenHandler().WriteToken(jwt),expiresAt=exp,role=u.Role};}
+static void Audit(BureauSyncDb db,ClaimsPrincipal p,string action,string type,string id,string detail){var actor=Guid.TryParse(p.FindFirstValue(ClaimTypes.NameIdentifier),out var value)?value:(Guid?)null;db.AuditEvents.Add(new AuditEvent{ActorId=actor,Action=action,EntityType=type,EntityId=id,Detail=detail});}
+static object Summary(Submission s,Lender l)=>new SubmissionSummary(s.Id,l.Code,s.FileName,s.State,s.Total,s.Ready,s.Review,s.Rejected,s.SubmittedAt);
+
+sealed class NoKidJwtHandler:JwtSecurityTokenHandler{
+    public override ClaimsPrincipal ValidateToken(string token,TokenValidationParameters validationParameters,out SecurityToken validatedToken){
+        return base.ValidateToken(token,validationParameters,out validatedToken);
+    }
+}
+
 public class RegisterRequest { public string Email {get;set;} = ""; public string Password {get;set;} = ""; public string Role {get;set;} = ""; }
 public class LoginRequest { public string Email {get;set;} = ""; public string Password {get;set;} = ""; }
 public record LenderRequest(string Code,string Name,string? SwiftBic,string? CbnLicense,string? Lei,string? CustomId);public record StateRequest(string State);public record SubmissionSummary(Guid Id,string LenderCode,string FileName,string State,int Total,int Ready,int Review,int Rejected,DateTimeOffset SubmittedAt);public class TestJsonRequest { public string Value {get;set;} = ""; }
